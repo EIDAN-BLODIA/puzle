@@ -1,0 +1,98 @@
+import pygame
+import random
+import sys
+
+# Inicializar Pygame
+pygame.init()
+
+# Dimensiones de la ventana del juego
+WIDTH, HEIGHT = 400, 400
+ROWS, COLS = 3, 3  # El rompecabezas será de 3x3
+TILE_SIZE = WIDTH // COLS
+
+# Colores
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+# Crear ventana
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Rompecabezas Deslizante")
+
+# Cargar imagen y dividirla en piezas
+image = pygame.image.load('tu_imagen.png')
+image = pygame.transform.scale(image, (WIDTH, HEIGHT))
+tiles = []
+
+for row in range(ROWS):
+    for col in range(COLS):
+        rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+        tile = image.subsurface(rect)
+        tiles.append(tile)
+
+# Mezclar las piezas
+random.shuffle(tiles)
+
+# Mover una pieza a la vez
+def draw_tiles():
+    screen.fill(WHITE)
+    for i, tile in enumerate(tiles):
+        if tile:
+            x = (i % COLS) * TILE_SIZE
+            y = (i // COLS) * TILE_SIZE
+            screen.blit(tile, (x, y))
+    pygame.display.flip()
+
+# Obtener la posición del espacio vacío
+def get_blank_pos():
+    for i, tile in enumerate(tiles):
+        if tile is None:
+            return i
+
+# Cambiar piezas
+def swap_tiles(i, j):
+    tiles[i], tiles[j] = tiles[j], tiles[i]
+
+# Verificar si el jugador ha ganado
+def is_solved():
+    for i in range(len(tiles) - 1):
+        if tiles[i] is None or tiles[i].get_at((0, 0)) != image.get_at(((i % COLS) * TILE_SIZE, (i // COLS) * TILE_SIZE)):
+            return False
+    return True
+
+# Bucle principal
+def main():
+    blank_pos = get_blank_pos()
+    running = True
+
+    while running:
+        draw_tiles()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+                # Movimiento de las piezas
+                if event.key == pygame.K_UP and blank_pos + COLS < len(tiles):
+                    swap_tiles(blank_pos, blank_pos + COLS)
+                    blank_pos += COLS
+                elif event.key == pygame.K_DOWN and blank_pos - COLS >= 0:
+                    swap_tiles(blank_pos, blank_pos - COLS)
+                    blank_pos -= COLS
+                elif event.key == pygame.K_LEFT and blank_pos % COLS != COLS - 1:
+                    swap_tiles(blank_pos, blank_pos + 1)
+                    blank_pos += 1
+                elif event.key == pygame.K_RIGHT and blank_pos % COLS != 0:
+                    swap_tiles(blank_pos, blank_pos - 1)
+                    blank_pos -= 1
+
+        if is_solved():
+            print("¡Felicidades, has completado el rompecabezas!")
+            running = False
+
+if __name__ == "__main__":
+    main()
